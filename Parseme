@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+
+import os
+import datetime
+
+# Define the log directory
+log_dir = "/path/to/logs" 
+
+# directory path where the logs are stored
+
+
+# Defines the log parsing function
+def parse_logs(log_file):
+
+    # Add your log parsing logic here
+    print(f"Parsing log file: {log_file}")
+    
+    # Example command: Read the log file
+    with open(log_file, 'r') as file:
+        for line in file:
+      
+            # Example parsing logic: Extract relevant information from log lines
+            if "ERROR" in line:
+                print(line)
+
+# Get the current date
+current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+# Construct the log file path
+log_file = os.path.join(log_dir, f"log_{current_date}.txt")
+
+# Check if the log file exists
+if os.path.exists(log_file):
+
+    # Call the log parsing function
+    # Passes the log file path as an argument
+
+    parse_logs(log_file)
+    
+else:
+    print("Log file not found for today")
+
+# This practical script prints the log file being parsed and any lines containing the word "ERROR".
