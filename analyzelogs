@@ -1,0 +1,45 @@
+import re 
+# regular expressions
+
+# Define the log file paths
+log_files = [
+    "webserver.log",
+    "firewall.log",
+    "ids.log"
+]
+
+# Define regular expressions for log pattern matching
+webserver_log_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (\w+) - (.+)'
+firewall_log_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (\w+) - (.+)'
+ids_log_pattern = r'(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (\w+) - (.+)'
+
+# Function to parse and analyze log files
+def analyze_logs(log_files): # takes a list of log files as input
+    for log_file in log_files:
+        try:
+            with open(log_file, 'r') as file:
+                # Read each line in the log file
+                for line in file:
+                    # Match the log pattern using regular expressions
+                    if re.match(webserver_log_pattern, line):
+                        # Extract useful information from the log entry
+                        # Perform further analysis or actions based on the extracted information
+                        print("Web server log entry:", line)
+
+                    elif re.match(firewall_log_pattern, line):
+                        # Extract useful information from the log entry
+                        # Perform further analysis or actions based on the extracted information
+                        print("Firewall log entry:", line)
+
+                    elif re.match(ids_log_pattern, line):
+                        # Extract useful information from the log entry
+                        # Perform further analysis or actions based on the extracted information
+                        print("Intrusion Detection System log entry:", line)
+
+                    # Add more log patterns and corresponding actions as needed
+
+        except FileNotFoundError:
+            print("Error: Log file '{}' not found.".format(log_file))
+
+# Call the analyze_logs function with the log files as input
+analyze_logs(log_files)
