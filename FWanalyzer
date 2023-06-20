@@ -1,0 +1,142 @@
+# Firewall Rule Analyzer Script
+
+# Retrieve existing firewall rules
+$firewallRules = Get-NetFirewallRule
+
+# Check for security risks and generate report
+$securityReport = @()
+
+# Iterate through each firewall rule
+foreach ($rule in $firewallRules) {
+    # Check if the rule allows inbound connections from any IP address
+    if ($rule.Action -eq 'Allow' -and $rule.Direction -eq 'Inbound' -and $rule.RemoteAddress -eq 'Any') {
+        $securityReport += [PSCustomObject]@{
+            RuleName = $rule.Name
+            Risk = 'Insecure'
+        }
+    if ($rule.Action -eq 'Allow' -and $rule.Direction -eq 'Inbound' -and $rule.LocalIPort -eq '80') {
+        $securityReport += [PSCustomObject]@{
+            RuleName = $rule.Name
+            Risk = 'Potential HTTP Vulnerability'
+        }
+        if ($rule.Action -eq 'Allow' -and $rule.Direction -eq 'Inbound' -and $rule.LocalIPort -eq '3389') {
+            $securityReport += [PSCustomObject]@{
+                RuleName = $rule.Name
+                Risk = 'Potential RDP Vulnerability'
+
+            }
+        }
+    }
+}
+    # Add additional security checks as needed
+    # Example: Check for rules that allow specific ports commonly targeted by attackers
+    # if ($rule.Action -eq 'Allow' -and $rule.Direction -eq 'Inbound' -and $rule.LocalPort -eq '443') {
+    #     $securityReport += [PSCustomObject]@{
+    #         RuleName = $rule.Name
+    #         Risk = 'Potential HTTPS Vulnerability'
+    #     }
+    # }
+}
+
+# Rule Validation
+$invalidRules = $firewallRules | Where-Object { $_.Enabled -and (-not (Test-NetFirewallRule -PolicyStore $_)) }
+
+# Rule Comparison
+$otherDeviceRules = Get-NetFirewallRule -CimSession $otherDevice
+$ruleComparison = Compare-Object -ReferenceObject $firewallRules -DifferenceObject $otherDeviceRules -Property Name, Action
+
+# Rule Change Management 
+$changeLog = @()
+
+#Retrieve the current date and time
+$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+# Retrieve the username of the user running the script 
+$username = $env:USERNAME
+
+foreach ($rule in $firewallRules) {
+    # Check if the rule has been modified recently
+    $lastModified = $rule.$LastModified
+    if ($last.modified -ne $null) {
+        # Add the rule change details to the chane log 
+        $changeLog += [PSCustomObject]@{
+            RuleName = $rule.Name
+            ModifiedBy = $username
+            ModifiedDate = $lastModified
+        }
+    }
+}
+# Log the rule change to a file 
+$logFilePath = -Path "C:\Firewallchangelog.csv"
+$changeLog | Export-Csv $logFilePath -NoTypeInformation
+
+# Display the change log 
+$changeLog | Format-Table -AutoSize
+
+# Rule Optimization Recommendations
+$optimizationReport = @()
+foreach ($rule in $firewallRules) {
+    if ($rule.Action -eq 'Allow' -and $rule.Direction -eq 'Inbound') {
+        # Check if there are overlapping rules with the same port and protocol
+        $overlappingRules = $firewallRules | Where-Object {
+            $_.Action -eq 'Allow' -and
+            $_.Direction -eq 'Inbound' -and
+            $_.Protocol -eq $rule.Protocol -and
+            $_.LocalPort -eq $rule.LocalPort -and
+            $_.Name -ne $rule.Name
+        }
+
+        # If overlapping rules are found, add them to the optimization report
+        if ($overlappingRules){
+            $optimizationReport += [PSCustomObject]@{
+                RuleName = $rule.Name
+                Recommendation = 'Consolidate or Remove Overlapping Rules'
+                $overlappingRules = $overlappingRules.Names -join ', '
+            }
+        }
+    }
+   
+    # Add optimization recommendations based on best practices
+    # Example: Check for redundant or overlapping rules
+    # if ($rule.Action -eq 'Allow' -and $rule.Direction -eq 'Inbound') {
+    #     $overlappingRules = $firewallRules | Where-Object { $_.Action -eq 'Allow' -and $_.Direction -eq 'Inbound' -and $_.LocalPort -eq $rule.LocalPort -and $_.Name -ne $rule.Name }
+    #     if ($overlappingRules) {
+    #         $optimizationReport += [PSCustomObject]@{
+    #             RuleName = $rule.Name
+    #             Recommendation = 'Consolidate or Remove Overlapping Rules'
+    #         }
+    #     }
+    # }
+}
+
+# Hit Count Monitoring
+$hitCountReport = @()
+foreach ($rule in $firewallRules) {
+    $hitCount = (Get-NetFirewallRule -Name $rule.Name).PermittedConnections
+    $hitCountReport += [PSCustomObject]@{
+        RuleName = $rule.Name
+        HitCount = $hitCount
+    }
+}
+
+# Display the hit count report 
+$hitCountReport | Format-Table -AutoSize
+
+# Generate Documentation
+$firewallRules | Export-Csv -Path 'FirewallRulesDocumentation.csv' -NoTypeInformation
+
+# Display Reports
+Write-Host 'Security Report:'
+$securityReport | Format-Table -AutoSize
+
+Write-Host 'Invalid Rules:'
+$invalidRules | Format-Table -AutoSize
+
+Write-Host 'Rule Comparison Report:'
+$ruleComparison | Format-Table -AutoSize
+
+Write-Host 'Optimization Recommendations:'
+$optimizationReport | Format-Table -AutoSize
+
+Write-Host 'Hit Count Report:'
+$hitCountReport | Format-Table -AutoSize
