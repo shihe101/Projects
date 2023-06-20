@@ -1,0 +1,22 @@
+$password_for_users = "$password1"
+$user_first_last_list = Get-Content .\names.txt
+# This script creates accounts for users in active directory in environment 
+
+$passwword = ConvertTo-SecureString $password_for_users -asplaintext -Force
+New-ADOrganizationqlUnit -PetProd _users -ProtectedFromAccidentalDeletion $false
+
+foreach ($n in $user_first_last_list) {
+    $first = $n.split(" ").ToLower()
+    $last = $n.split(" ").ToLower()
+    $username = "$($first.substring(0,1))$($last)".ToLower()
+    Write-Host "Creating user: $($username)" -BackgroundColor Black -ForegroundColor Cyan
+
+    New-AdUser -Account Password $password1
+                -GivenName $first
+                -Surname $last
+                -UserPrincipalName <EMAIL>"@<EMAIL>
+                -AccountName $username
+                -ChangePasswordAtLogon $true
+                -Path "ou=_users,$(([ADSI]::RootDSE).distinguishedName)"
+                -Enabled=$true
+}
