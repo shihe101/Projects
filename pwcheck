@@ -1,0 +1,51 @@
+# Import the Active Directory module
+Import-Module ActiveDirectory
+
+#Retrieve all user accounts from Active Directory 
+$users = Get-ADUser -Filter * -Properties PasswordLastSet, PasswordNeverExpires
+
+# Define the complexity requirements from password 
+$minimumLength = 8
+# Minimum length of a password is eight characters.
+$minimumuppercase = 1
+# At least one uppercase character required in passwords (A through Z).
+$minimumlowercase = 1
+#At least one lowercase letter required for passwords(a to z)
+$minimumspecialcharacters = 1
+#At least one special character required for passwords (!@#$%^&*_-+=`~
+$minimumnumbers = 1 
+#At least one number required for passwords (0–9)
+
+#Iterate through each user account 
+foreach ($user in $users) {
+    $password = $user.PasswordLastSet
+    Write-Host "$username"
+
+    # Check that the current password meets complexity requirments
+    if ($password -ne $null -and $password -ne "") { 
+        $passwordComplexity = $password | ConvertTo-SecureString | Measure-Object -Character
+
+        if ($passwordComplexity.Length -ge $minimumLength  -and 
+        ($passwordComplexity.uppercase -ge $minimumuppercase) -and
+        ($passwordComplexity.lowercase -ge $minimumlowercase) -and
+        ($passwordComplexity.number -ge $minimumnumbers)
+        ($passwordComplexity.special -ge $minimumspecialcharacters)) {
+            Write-Host " User $($user.samaccountname) has a strong password."
+        }
+        else {
+            Write-Host " User $($user.samaccountname) has a weak password."
+        }
+    }
+    else {
+        # if the user never set a password, handle it accordingly
+        if ($user.PasswordNeverExpires) {
+            Write-Host "User $($user.samaccountname) has a password that never expires."
+        }
+        else {
+            Write-Host " User $($user.samaccountname) does not have a password set."
+        }
+    }
+}
+    #Check if the last time this user changed their password was more than ninety days ago
+    If ((Get-Date).Subtract($user.Passwordlastset).days -ge "3"{
+}
