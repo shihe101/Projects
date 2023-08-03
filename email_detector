@@ -1,0 +1,18 @@
+# Import the necessary modules
+import-module security
+import-module regex
+
+# Get the email messages
+$messages = get-content *.eml
+
+# Split the email messages into separate lines
+$lines = foreach ($message in $messages) { $message -split '\r\n' }
+
+# Filter the email messages based on specific criteria
+$phishing_messages = $lines | where-object { $_ -match '(phishing|scam|fraud|lure|trick|deceive)' }
+
+# Extract specific information from the email messages
+$phishing_urls = $phishing_messages | foreach { $_ -match '(https?://[^\s]+)' }
+
+# Print the results
+$phishing_urls
